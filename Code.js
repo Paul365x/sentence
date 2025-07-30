@@ -1,3 +1,8 @@
+const stLoc = "B4";
+const enLoc = "C4";
+const deltaLoc = "D4";
+const balCol = "D";
+
 // sets up our custom menu
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
@@ -10,6 +15,20 @@ function onOpen() {
       .addToUi();
 }
 
+// setup the estimate of change in balance over the period
+function setDelta(row) {
+   var ss = SpreadsheetApp.getActive();
+   var res_sheet = ss.getSheetByName("Results");
+   var src_sheet = ss.getSheetByName("Data");   
+   var amt = src_sheet.getRange(balCol + "2").getValue();
+   res_sheet.getRange(enLoc).setValue(amt);
+   amt = src_sheet.getRange(balCol + row).getValue();
+   res_sheet.getRange(stLoc).setValue(amt);
+   var range = res_sheet.getRange(deltaLoc);
+   range.setFormula("=" + enLoc + "-" + stLoc);
+}
+
+// copy and setup the working sheet from the data sheet
 function cleanWorking() {
   var ss = SpreadsheetApp.getActive();
   var src_sheet = ss.getSheetByName("Data");
@@ -53,18 +72,25 @@ function cleanWorking() {
   data_range = data_range.offset(0, 0,last_row, 3);
   src_range.copyTo(data_range);
   CLEAN()
+  setDelta(last_row + 1);
+
+
 }
 
+// date format from slashes to dashes
 function toStdDate(str) {
   var pcs = str.split("/");
   return pcs[2] + "-" + pcs[1] + "-" + pcs[0];
 }
 
+// date format from dashes to slashes
 function toBankDate(str) {
    const MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
     yesterday = new Date(now.getTime() - MILLIS_PER_DAY);   
     date = Utilities.formatDate(yesterday, timeZone, 'dd/MM/yyyy');
 }
+
+// helper function to find a substring
 function indexOfStr(str, strArray) {
     for (var j=0; j<strArray.length; j++) {
         if (strArray[j].match(str)) return j;
@@ -72,6 +98,7 @@ function indexOfStr(str, strArray) {
     return -1;
 }
 
+// transpose array from row indexed to column indexed ie rotate.
 function transposeArr( arr ) {
   var rowlen = 0;
   var col = [];
